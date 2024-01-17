@@ -1,0 +1,37 @@
+bezkoder:
+  app:
+    jwtCookieName: bezkoder
+    jwtExpirationMs: 86400000
+    jwtSecret: ======================BezKoder=Spring===========================
+spring:
+  datasource:
+    driverClassName: org.h2.Driver
+    password: ''
+    url: jdbc:h2:mem:testdb
+    username: sa
+  h2:
+    console:
+      enabled: true
+      path: /h2-ui
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    defer-datasource-initialization: true
+    initialization-mode: always
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: "health, beans, metrics"
+        base-path: "/management-dashboard"
+    endpoint:
+      health:
+        show-details: always
+
+  dummyService:
+    port: 8081
+    address: 127.0.0.1

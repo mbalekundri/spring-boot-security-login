@@ -1,10 +1,13 @@
 # Spring Boot Security Login example with JWT and H2 example
+# Refer: https://www.bezkoder.com/spring-boot-security-login-jwt/
 
 - Appropriate Flow for User Login and Registration with JWT and HttpOnly Cookie
 - Spring Boot Rest Api Architecture with Spring Security
 - How to configure Spring Security to work with JWT
 - How to define Data Models and association for Authentication and Authorization
 - Way to use Spring Data JPA to interact with H2 Database
+
+# Additional reference of Spring security In Depth: https://medium.com/@rameez.s.shaikh/spring-boot-3-spring-security-6-in-depth-understanding-927bb5e826ee
 
 ## User Registration, Login and Authorization process.
 
@@ -75,12 +78,34 @@ bezkoder.app.jwtExpirationMs= 86400000
 mvn spring-boot:run
 ```
 
-## Run following SQL insert statements
-```
+## Run following SQL insert statements 
 INSERT INTO roles(name) VALUES('ROLE_USER');
-INSERT INTO roles(name) VALUES('ROLE_MODERATOR');
+INSERT INTO roles(name) VALUES('ROLE_MANAGER');
 INSERT INTO roles(name) VALUES('ROLE_ADMIN');
-```
+COMMIT;
+
+[
+    {
+        "username":"admin",
+        "email":"admin@gmail.com",
+        "password":"adminpwd",
+        "role":["user","manager","admin"]
+    },
+
+    {
+        "username":"user",
+        "email":"user@gmail.com",
+        "password":"userpwd",
+        "role":["user"]
+    },
+
+    {
+        "username":"manager",
+        "email":"manager@gmail.com",
+        "password":"managerpwd",
+        "role":["manager","user"]
+    }
+]
 
 ## Refresh Token
 

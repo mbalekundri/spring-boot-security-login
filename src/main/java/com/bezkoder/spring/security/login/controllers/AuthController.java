@@ -1,14 +1,14 @@
 package com.bezkoder.spring.security.login.controllers;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.Valid;
-
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,17 +22,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bezkoder.spring.security.login.dto.UserDTO;
 import com.bezkoder.spring.security.login.models.ERole;
 import com.bezkoder.spring.security.login.models.Role;
 import com.bezkoder.spring.security.login.models.User;
 import com.bezkoder.spring.security.login.payload.request.LoginRequest;
 import com.bezkoder.spring.security.login.payload.request.SignupRequest;
-import com.bezkoder.spring.security.login.payload.response.UserInfoResponse;
 import com.bezkoder.spring.security.login.payload.response.MessageResponse;
+import com.bezkoder.spring.security.login.payload.response.ResponseFactory;
+import com.bezkoder.spring.security.login.payload.response.UserInfoResponse;
 import com.bezkoder.spring.security.login.repository.RoleRepository;
 import com.bezkoder.spring.security.login.repository.UserRepository;
 import com.bezkoder.spring.security.login.security.jwt.JwtUtils;
 import com.bezkoder.spring.security.login.security.services.UserDetailsImpl;
+
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 //for Angular Client (withCredentials)
@@ -71,11 +75,20 @@ public class AuthController {
         .map(item -> item.getAuthority())
         .collect(Collectors.toList());
 
-    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-        .body(new UserInfoResponse(userDetails.getId(),
-                                   userDetails.getUsername(),
-                                   userDetails.getEmail(),
-                                   roles));
+    return ResponseFactory.build(new UserInfoResponse(userDetails.getId(),
+            userDetails.getUsername(),
+            userDetails.getEmail(),
+            roles), jwtCookie, HttpStatus.OK, "User authenticated successfully!");
+  }
+  
+  @PostMapping("/signupUsers")
+  public ResponseEntity<?> registerMultipleUsers(@Valid @RequestBody SignupRequest[] signUpRequests) {
+	  
+	 Arrays.asList(signUpRequests).forEach(req -> {
+		 this.registerUser(req);
+	 });
+	  
+	  return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
   }
 
   @PostMapping("/signup")
@@ -109,10 +122,10 @@ public class AuthController {
           roles.add(adminRole);
 
           break;
-        case "mod":
-          Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+        case "manager":
+          Role manRole = roleRepository.findByName(ERole.ROLE_MANAGER)
               .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-          roles.add(modRole);
+          roles.add(manRole);
 
           break;
         default:
@@ -124,15 +137,15 @@ public class AuthController {
     }
 
     user.setRoles(roles);
-    userRepository.save(user);
-
-    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    user = userRepository.save(user);
+    UserDTO dto = new UserDTO();
+    BeanUtils.copyProperties(user, dto);
+    return ResponseFactory.build(dto, HttpStatus.CREATED, "User registered successfully!");
   }
 
   @PostMapping("/signout")
   public ResponseEntity<?> logoutUser() {
     ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
-    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-        .body(new MessageResponse("You've been signed out!"));
+    return ResponseFactory.build(cookie, HttpStatus.OK, "You've been signed out!");
   }
 }
